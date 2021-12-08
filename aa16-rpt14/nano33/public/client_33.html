@@ -21,7 +21,6 @@
         <!-- 3rd gauge -->
         <canvas id="gauge3"> </canvas>
         <!-- 4th gauge -->
-        <canvas id="gauge4"> </canvas>
     </div>
     <!-- <div id="console"> </div> -->
     <h3 align="center"> on Time: <span id="time"> </span> </h3> 
@@ -33,15 +32,27 @@
       var streamPlot = document.getElementById('myDiv');
       var ctime = document.getElementById('time');
       var tArray = [], // time of data arrival
-        y1Track = [], // value of sensor 1 : temperature
-        y2Track = [], // value of sensor 2 : humidity
-        y3Track = [], // value of sensor 3 : luminosity
+        y1Track = [], // acx
+        y2Track = [], // acy
+        y3Track = [], // acz
+        y4Track = [], // gyx
+        y5Track = [], // gyy
+        y6Track = [], // gyz
+        y7Track = [], // max
+        y8Track = [], // may
+        y9Track = [], // maz
         // y4Track = [], // value of sensor 4 : pressure
         numPts = 50, // number of data points in x-axis                
         dtda = [],  // 1 x 4 array : [date, data1, data2, data3] from sensors
-        preX = -1,
-        preY = -1,
-        preZ = -1,
+        acX = -1,
+        acY = -1,
+        acZ = -1,
+        gyX = -1,
+        gyY = -1,
+        gyZ = -1,
+        maX = -1,
+        maY = -1,
+        maZ = -1,
         initFlag = true;
 
     var socket = io.connect('http://life21c.inje.ac.kr:3000'); // port = 3000  
@@ -52,8 +63,13 @@
                 dtda[0]=msg[0];
                 dtda[1]=parseFloat(msg[1]);  // temperature
                 dtda[2]=parseFloat(msg[2]);  // Humidity
-                dtda[3]=parseInt(msg[3]);    // Luminosity
+                dtda[3]=parseFloat(msg[3]);    // Luminosity
                 dtda[4]=parseFloat(msg[4]);  // Pressure
+                dtda[5]=parseFloat(msg[5]);
+                dtda[6]=parseFloat(msg[6]);
+                dtda[7]=parseFloat(msg[7]);
+                dtda[8]=parseFloat(msg[8]);
+                dtda[9]=parseFloat(msg[9]);     
                 init();
                 initFlag=false;
             }
@@ -63,21 +79,33 @@
             dtda[0]=msg[0];
             dtda[1] = parseFloat(msg[1]); 
             dtda[2] = parseFloat(msg[2]);
-            dtda[3] = parseInt(msg[3]);
+            dtda[3] = parseFloat(msg[3]);
             dtda[4] = parseFloat(msg[4]);
+            dtda[5] = parseFloat(msg[5]);
+            dtda[6] = parseFloat(msg[6]);
+            dtda[7] = parseFloat(msg[7]);
+            dtda[8] = parseFloat(msg[8]);
+            dtda[9] = parseFloat(msg[9]);
 
             // Only when any of temperature or Luminosity is different from the previous one, the screen is redrawed.
-            if (dtda[1] != preX || dtda[2] != preY || dtda[3] != preZ) {  // any change?
-                preX = dtda[1];  
-                preY = dtda[2];
-                preZ = dtda[3];
-                                
+            if (dtda[1] != acX || dtda[2] != acY || dtda[3] != acZ 
+            || dtda[4] != gyX || dtda[5] != gyY || dtda[6] != gyZ 
+            || dtda[7] != maX || dtda[8] != maY || dtda[9] != maZ) {  // any change?
+                acX = dtda[1];  
+                acY = dtda[2];
+                acZ = dtda[3];
+                gyX = dtda[4];
+                gyY = dtda[5];
+                gyZ = dtda[6];
+                maX = dtda[7];
+                maY = dtda[8];
+                maZ = dtda[9];
                 // when new data is coming, keep on streaming            
                 ctime.innerHTML = dtda[0];
-                gauge_temp.setValue(dtda[1])  // temp gauge
-                gauge_humi.setValue(dtda[2]); // humi gauge
-                gauge_lux.setValue(dtda[3]);  // lux gauge
-                gauge_pres.setValue(dtda[4]);   // pres gauge
+                gauge_ac.setValue(Math.sqrt(Math.pow(dtda[1],2)+Math.pow(dtda[2],2)+Math.pow(dtda[3],2))); 
+                gauge_gy.setValue(Math.sqrt(Math.pow(dtda[4],2)+Math.pow(dtda[5],2)+Math.pow(dtda[6],2)));
+                gauge_ma.setValue(Math.sqrt(Math.pow(dtda[7],2)+Math.pow(dtda[8],2)+Math.pow(dtda[9],2))); 
+                //gauge_pres.setValue(dtda[4]);   // pres gauge
                 //nextPt();
                 tArray = tArray.concat(dtda[0]);
                 tArray.splice(0, 1);  // remove the oldest data
@@ -87,12 +115,24 @@
                 y2Track.splice(0, 1);            
                 y3Track = y3Track.concat(dtda[3]); // pres
                 y3Track.splice(0, 1);
+                y4Track = y4Track.concat(dtda[4]); // pres
+                y4Track.splice(0, 1);
+                y5Track = y5Track.concat(dtda[5]); // pres
+                y5Track.splice(0, 1);
+                y6Track = y6Track.concat(dtda[6]); // pres
+                y6Track.splice(0, 1);
+                y7Track = y7Track.concat(dtda[7]); // pres
+                y7Track.splice(0, 1);
+                y8Track = y8Track.concat(dtda[8]); // pres
+                y8Track.splice(0, 1);
+                y9Track = y9Track.concat(dtda[9]); // pres
+                y9Track.splice(0, 1);
                 // y4Track = y4Track.concat(dtda[4]); // lux
                 // y4Track.splice(0, 1);
 
                 var update = {
-                    x:  [tArray, tArray, tArray],
-                    y:  [y1Track, y2Track, y3Track]
+                    x:  [tArray, tArray, tArray,tArray,tArray,tArray,tArray,tArray,tArray],
+                    y:  [y1Track, y2Track, y3Track,y4Track,y5Track,y6Track,y7Track,y8Track,y9Track]
                 }
 
                 Plotly.update(streamPlot, update);
@@ -108,6 +148,12 @@
             y1Track.push(dtda[1]);  // sensor 1 (temp)
             y2Track.push(dtda[2]);  // sensor 2 (humi)
             y3Track.push(dtda[3]);  // sensor 3 (lux)
+            y4Track.push(dtda[4]);
+            y5Track.push(dtda[5]);
+            y6Track.push(dtda[6]);
+            y7Track.push(dtda[7]);
+            y8Track.push(dtda[8]);
+            y9Track.push(dtda[9]);
         }
 
         Plotly.plot(streamPlot, data, layout);
@@ -117,7 +163,9 @@
     var data = [{
         x : tArray,
         y : y1Track,
-        name : 'temperature',
+        name : 'AccelerometerX',
+        xaxis : 'x1',
+        yaxis : 'y1',
         mode: "markers+lines",  // "lines+markers"
         line: {
             color: "#1f77b4", 
@@ -132,18 +180,18 @@
           }
       }
   }, {
-    x : tArray,
-    y : y2Track,
-    name : 'humidity',
-    xaxis: 'x2',
-    yaxis : 'y2',
+        x : tArray,
+        y : y2Track,
+        name : 'AccelerometerY',
+        xaxis : 'x1',
+        yaxis : 'y1',
         mode: "markers+lines",  // "lines+markers"
         line: {
             color: "#1f77b4", 
             width: 1
         }, 
         marker: {
-            color: "rgb(0, 0, 255)", 
+            color: "rgb(255, 0, 0)", 
             size: 6, 
             line: {
               color: "black", 
@@ -151,18 +199,132 @@
           }
       }
   }, {
-    x : tArray,
-    y : y3Track,
-    name : 'luminosity',
-    xaxis: 'x3',
-    yaxis : 'y3',
+        x : tArray,
+        y : y3Track,
+        name : 'AccelerometerZ',
+        xaxis : 'x1',
+        yaxis : 'y1',
         mode: "markers+lines",  // "lines+markers"
         line: {
             color: "#1f77b4", 
             width: 1
         }, 
         marker: {
-            color: "rgb(0, 255, 0)", 
+            color: "rgb(255, 0, 0)", 
+            size: 6, 
+            line: {
+              color: "black", 
+              width: 0.5
+          }
+      }
+  }, {
+        x : tArray,
+        y : y4Track,
+        name : 'GyroscopeX',
+        xaxis : 'x2',
+        yaxis : 'y2',
+        mode: "markers+lines",  // "lines+markers"
+        line: {
+            color: "#1f77b4", 
+            width: 1
+        }, 
+        marker: {
+            color: "rgb(255, 0, 0)", 
+            size: 6, 
+            line: {
+              color: "black", 
+              width: 0.5
+          }
+      }
+  }, {
+        x : tArray,
+        y : y5Track,
+        name : 'GyroscopeY',
+        xaxis : 'x2',
+        yaxis : 'y2',
+        mode: "markers+lines",  // "lines+markers"
+        line: {
+            color: "#1f77b4", 
+            width: 1
+        }, 
+        marker: {
+            color: "rgb(255, 0, 0)", 
+            size: 6, 
+            line: {
+              color: "black", 
+              width: 0.5
+          }
+      }
+  },{
+        x : tArray,
+        y : y6Track,
+        name : 'GyroscopeZ',
+        xaxis : 'x2',
+        yaxis : 'y2',
+        mode: "markers+lines",  // "lines+markers"
+        line: {
+            color: "#1f77b4", 
+            width: 1
+        }, 
+        marker: {
+            color: "rgb(255, 0, 0)", 
+            size: 6, 
+            line: {
+              color: "black", 
+              width: 0.5
+          }
+      }
+  }, {
+        x : tArray,
+        y : y7Track,
+        name : 'MagenticX',
+        xaxis : 'x3',
+        yaxis : 'y3',
+        mode: "markers+lines",  // "lines+markers"
+        line: {
+            color: "#1f77b4", 
+            width: 1
+        }, 
+        marker: {
+            color: "rgb(255, 0, 0)", 
+            size: 6, 
+            line: {
+              color: "black", 
+              width: 0.5
+          }
+      }
+  }, {
+        x : tArray,
+        y : y8Track,
+        name : 'MagenticY',
+        xaxis : 'x3',
+        yaxis : 'y3',
+        mode: "markers+lines",  // "lines+markers"
+        line: {
+            color: "#1f77b4", 
+            width: 1
+        }, 
+        marker: {
+            color: "rgb(255, 0, 0)", 
+            size: 6, 
+            line: {
+              color: "black", 
+              width: 0.5
+          }
+      }
+  }, {
+        x : tArray,
+        y : y9Track,
+        name : 'MagenticZ',
+        xaxis : 'x3',
+        yaxis : 'y3',
+        mode: "markers+lines",  // "lines+markers"
+        line: {
+            color: "#1f77b4", 
+            width: 1
+        }, 
+        marker: {
+            color: "rgb(255, 0, 0)", 
             size: 6, 
             line: {
               color: "black", 
@@ -170,43 +332,39 @@
           }
       }
   }];
-
-  var layout = {
+var layout = {
     xaxis : {
         title : 'time',
-        domain : [0, 1]
+        domain : [0,1]
     },
     yaxis : {
-        title : 'temp (°C)',
+        title : 'Accelerometer',
         domain : [0, 0.3],
-        range : [-30, 50]
+        range : [0,2000]
     },
     xaxis2 : {
         title : '',
-        domain : [0, 1],
-        position : 0.35,
-        showticklabels: false
+        domain : [0,1],
     },
-    yaxis2 : {
-        title : 'humi (%)',
-        domain : [0.35, 0.65],
-        range : [0, 100]
+    yaxi2 : {
+        title : 'Gyroscope',
+        domain : [0.4, 0.6],
+        range : [0,2000]
     },
     xaxis3 : {
         title : '',
-        domain : [0, 1],
-        position : 0.7,
-        showticklabels: false
+        domain : [0,1],
+
     },
     yaxis3 : {
-        title : 'lumi (lux)',
+        title : 'Magentic',
         domain : [0.7, 1],
-        range : [0, 500]
+        range : [0,2000]
     }
 };
 
     // gauge configuration
-    var gauge_temp = new Gauge({
+    var gauge_ac = new Gauge({
         renderTo    : 'gauge1',
         width       : 240,
         height      : 240,
@@ -240,9 +398,9 @@
         }
     });
 
-    gauge_temp.draw();
+    gauge_ac.draw();
 
-    var gauge_humi = new Gauge({
+    var gauge_gy = new Gauge({
         renderTo    : 'gauge2',
         width       : 240,
         height      : 240,
@@ -273,15 +431,15 @@
         }
     });
 
-    gauge_humi.draw();
+    gauge_gy.draw();
 
-    var gauge_lux = new Gauge({
+    var gauge_ma = new Gauge({
         renderTo    : 'gauge3',
         width       : 240,
         height      : 240,
         glow        : true,
         units       : 'lux',
-        valueFormat : { int : 2, dec : 0 },
+        valueFormat : { int : 2, dec : 1 },
         title       : "Luminosity",
         minValue    : 0,
         maxValue    : 1000,  // new
@@ -306,40 +464,7 @@
         }
     });
 
-    gauge_lux.draw();
-
-    var gauge_pres = new Gauge({
-        renderTo    : 'gauge4',
-        width       : 240,
-        height      : 240,
-        glow        : true,
-        units       : 'mbar',
-        valueFormat : { int : 3, dec : 1 },
-        title       : "Pressure",
-        minValue    : 980,
-        maxValue    : 1030,
-        majorTicks  : ['980','990','1000','1010','1020','1030'],
-        minorTicks  : 5,
-        strokeTicks : false,
-        highlights  : [        
-        { from : 980, to : 990, color : '#aaa' },
-        { from : 990, to : 1000, color : '#ccc' },
-        { from :1000, to : 1010, color : '#ddd' },
-        { from : 1010, to : 1020, color : '#eee' },
-        { from : 1020, to : 1030, color : '#fff' }
-        ],
-        colors      : {
-            plate      : '#bcbc11',
-            majorTicks : '#f5f5f5',
-            minorTicks : '#aaa',
-            title      : '#fff',
-            units      : '#ccc',
-            numbers    : '#eee',
-            needle     : { start : 'rgba(240, 128, 128, 1)', end : 'rgba(255, 160, 122, .9)' }
-        }
-    });
-
-    gauge_pres.draw();
+    gauge_ma.draw();
 
 </script>
 </body>
