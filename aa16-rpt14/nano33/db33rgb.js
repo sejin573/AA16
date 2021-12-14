@@ -1,7 +1,5 @@
-// db33rgb.js
-
 var serialport = require('serialport');
-var portName = 'COM3';  // check your COM port!!
+var portName = 'COM13';  // check your COM port!!
 var port    =   process.env.PORT || 3000;  // port for DB
 
 var io = require('socket.io').listen(port);
@@ -88,6 +86,7 @@ var seventhcommaidx = 0;
 var eighthcommaidx = 0;
 var ninethcommaidx = 0;
 
+
 var Sensor = mongoose.model("Sensor", iotSchema);  // sensor data model
 
 // process data using parser
@@ -102,6 +101,7 @@ parser.on('data', (data) => { // call back when data is received
     seventhcommaidx = readData.indexOf(',',sixthcommaidx+1);
     eighthcommaidx = readData.indexOf(',',seventhcommaidx+1);
     ninethcommaidx = readData.indexOf(',',eighthcommaidx+1);
+    
 
     // parsing data into signals
     if (readData.lastIndexOf(',') > firstcommaidx && firstcommaidx > 0) {
